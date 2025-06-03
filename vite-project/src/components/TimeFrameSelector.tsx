@@ -1,20 +1,29 @@
-interface Props {
-  currentTimeFrame: string;
-  onChange: (value: string) => void;
-}
+import React from "react";
 
-const TimeFrameSelector = ({ currentTimeFrame, onChange }: Props) => {
-  const options = ["1m", "5m", "30m", "1h", "4h", "1d"];
-
+export default function TimeframeSelector({
+  current,
+  setCurrent,
+  timeframes,
+}: {
+  current: string;
+  setCurrent: (s: string) => void;
+  timeframes: string[];
+}) {
   return (
-    <select value={currentTimeFrame} onChange={(e) => onChange(e.target.value)}>
-      {options.map((opt) => (
-        <option key={opt} value={opt}>
-          {opt}
-        </option>
+    <div className="flex gap-1">
+      {timeframes.map((tf) => (
+        <button
+          key={tf}
+          className={`px-2 py-1 rounded border text-xs ${
+            tf === current
+              ? "bg-blue-600 text-white"
+              : "bg-white dark:bg-gray-700 text-gray-800 dark:text-white border-gray-300"
+          }`}
+          onClick={() => setCurrent(tf)}
+        >
+          {tf}
+        </button>
       ))}
-    </select>
+    </div>
   );
-};
-
-export default TimeFrameSelector;
+}
