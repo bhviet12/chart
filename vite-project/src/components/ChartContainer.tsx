@@ -65,6 +65,7 @@ export default function ChartContainer({ data, ema, theme }: Props) {
     return () => {
       window.removeEventListener("resize", handleResize);
       chart.remove();
+      chartInstance.current = null
     };
   }, [theme]);
 
