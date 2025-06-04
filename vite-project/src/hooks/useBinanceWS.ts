@@ -1,5 +1,7 @@
+// hooks/useBinanceWS.ts
 import { useEffect, useRef } from "react";
-import { ICandleStick, GetLiveCandle } from "../utils/api";
+import type { ICandleStick } from "../utils/api";
+import { GetLiveCandle } from "../utils/api";
 
 export function useBinanceWS(
   interval: string,
@@ -9,6 +11,10 @@ export function useBinanceWS(
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+
     const wsURL = GetLiveCandle(interval, coin);
     const ws = new WebSocket(wsURL);
     wsRef.current = ws;
@@ -17,7 +23,6 @@ export function useBinanceWS(
       const json = JSON.parse(event.data);
       const k = json.k;
       if (!k) return;
-      // Nhận cả nến đang chạy và nến mới đóng
       const candle: ICandleStick = {
         openTime: k.t,
         open: parseFloat(k.o),
@@ -35,6 +40,12 @@ export function useBinanceWS(
       onNewData(candle);
     };
 
-    return () => ws.close();
+    ws.onerror = (err) => {
+      ws.close();
+    };
+
+    return () => {
+      ws.close();
+    };
   }, [interval, coin, onNewData]);
 }

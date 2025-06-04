@@ -1,28 +1,31 @@
-import React, { useEffect, useRef } from "react";
-import { createChart, IChartApi, UTCTimestamp } from "lightweight-charts";
-import { ICandleStick } from "../utils/api";
+import { useEffect, useRef } from "react";
+import { createChart } from "lightweight-charts";
+import type { IChartApi, UTCTimestamp } from "lightweight-charts";
+import type { ICandleStick } from "../utils/api";
 
 type Props = {
   data: ICandleStick[];
-  rsi?: (number | undefined)[];
   ema?: (number | undefined)[];
   theme: "light" | "dark";
 };
 
-export default function ChartContainer({ data, rsi, ema, theme }: Props) {
+export default function ChartContainer({ data, ema, theme }: Props) {
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstance = useRef<IChartApi | null>(null);
+  const candleSeriesRef = useRef<ReturnType<IChartApi["addCandlestickSeries"]> | null>(null);
+  const volumeSeriesRef = useRef<ReturnType<IChartApi["addHistogramSeries"]> | null>(null);
+  const emaSeriesRef = useRef<ReturnType<IChartApi["addLineSeries"]> | null>(null);
 
+  // Chỉ tạo chart lại khi theme đổi hoặc lần đầu mount
   useEffect(() => {
-    if (!chartRef.current || !data.length) return;
+    if (!chartRef.current) return;
 
-    // Xóa chart cũ
+    // Xóa chart cũ nếu có
     if (chartInstance.current) {
       chartInstance.current.remove();
       chartInstance.current = null;
     }
 
-    // Tạo chart mới
     const chart = createChart(chartRef.current, {
       height: 400,
       layout: {
@@ -37,51 +40,18 @@ export default function ChartContainer({ data, rsi, ema, theme }: Props) {
       rightPriceScale: { scaleMargins: { top: 0.2, bottom: 0.3 } },
     });
 
-    // Candlestick
-    const candleSeries = chart.addCandlestickSeries();
-    candleSeries.setData(
-      data.map((k) => ({
-        time: Math.floor(k.openTime / 1000) as UTCTimestamp,
-        open: k.open,
-        high: k.high,
-        low: k.low,
-        close: k.close,
-      }))
-    );
-
-    // Volume
-    const volumeSeries = chart.addHistogramSeries({
+    chartInstance.current = chart;
+    candleSeriesRef.current = chart.addCandlestickSeries();
+    volumeSeriesRef.current = chart.addHistogramSeries({
       color: "#2962FF",
       priceFormat: { type: "volume" },
       priceScaleId: "",
-      scaleMargins: { top: 0.7, bottom: 0 },
     });
-    volumeSeries.setData(
-      data.map((k) => ({
-        time: Math.floor(k.openTime / 1000) as UTCTimestamp,
-        value: k.volume,
-        color: k.close > k.open ? "#26a69a" : "#ef5350",
-      }))
-    );
-
-    // EMA
-    if (ema && ema.length) {
-      const emaSeries = chart.addLineSeries({
-        color: "#FFA500",
-        lineWidth: 1.5,
-      });
-      emaSeries.setData(
-        data.map((k, i) => ({
-          time: Math.floor(k.openTime / 1000) as UTCTimestamp,
-          value: ema[i] || undefined,
-        }))
-      );
-    }
-
-    // RSI - (Xem chú thích cuối)
-    // Lightweight-charts chỉ support 1 pane, nếu muốn pane phụ (RSI) thì custom thêm dưới hoặc dùng bản pro
-
-    chartInstance.current = chart;
+    chart.priceScale('').applyOptions({ scaleMargins: { top: 0.7, bottom: 0 } });
+    emaSeriesRef.current = chart.addLineSeries({
+      color: "#FFA500",
+      lineWidth: 2,
+    });
 
     // Responsive
     const handleResize = () => {
@@ -96,7 +66,43 @@ export default function ChartContainer({ data, rsi, ema, theme }: Props) {
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, [data, theme, rsi, ema]);
+  }, [theme]);
+
+  // Khi data đổi, chỉ setData cho các series, KHÔNG tạo hoặc remove chart!
+  useEffect(() => {
+    if (
+      !candleSeriesRef.current ||
+      !volumeSeriesRef.current ||
+      !data.length
+    )
+      return;
+
+    const candlestick = data.map((k) => ({
+      time: Math.floor(k.openTime / 1000) as UTCTimestamp,
+      open: k.open,
+      high: k.high,
+      low: k.low,
+      close: k.close,
+    }));
+
+    candleSeriesRef.current.setData(candlestick);
+
+    volumeSeriesRef.current.setData(
+      data.map((k) => ({
+        time: Math.floor(k.openTime / 1000) as UTCTimestamp,
+        value: k.volume,
+        color: k.close > k.open ? "#26a69a" : "#ef5350",
+      }))
+    );
+    if (ema && ema.length && emaSeriesRef.current) {
+      emaSeriesRef.current.setData(
+        candlestick.map((c, i) => ({
+          time: c.time,
+          value: ema[i] ?? undefined,
+        }))
+      );
+    }
+  }, [data, ema]);
 
   return (
     <div className="w-full h-[400px] bg-white dark:bg-neutral-900 border rounded-2xl shadow-lg overflow-hidden">

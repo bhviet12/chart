@@ -15,8 +15,9 @@ export default function PriceButton({
       const res = await axios.get(
         `https://api.binance.com/api/v3/klines?symbol=${coin}&interval=${interval}&limit=2`
       );
-      const latest = res.data[1];
-      const prev = res.data[0];
+      const data = res.data as Array<any>;
+      const latest = data[1];
+      const prev = data[0];
       setResult(`Hiện tại: ${latest[4]} | 1 nến trước: ${prev[4]}`);
     } catch {
       setResult("Lỗi khi lấy dữ liệu!");
