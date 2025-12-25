@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { ICandleStick } from "../types/candle";
+import type { ICandleStick } from "../utils/api";
 
 export const GetCandles = async (currentTimeFrame: string, currentCoin: string): Promise<ICandleStick[]> => {
   try {

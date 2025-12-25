@@ -1,13 +1,13 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ChartContainer from "./components/ChartContainer";
 import TimeframeSelector from "./components/TimeFrameSelector";
 import IndicatorToggle from "./components/IndicatorToggle";
 import ThemeToggle from "./components/ThemeToggle";
 import PriceButton from "./components/PriceButton";
 import CoinSelector from "./components/CoinSelector";
-import { useBinanceWS } from "./hooks/useBinanceWS";    
-import { calcRSI, calcEMA } from "./utils/indicators";
-import { GetCandles, ICandleStick } from "./utils/api";
+import { useBinanceWS } from "./hooks/useBinanceWS";
+import { calcEMA } from "./utils/indicators";
+import { GetCandles, type ICandleStick } from "./utils/api";
 
 const TIMEFRAMES = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"];
 
@@ -55,7 +55,6 @@ function App() {
 
   // Tính toán indicator theo yêu cầu
   const closes = klines.map((k) => k.close);
-  const rsiData = indicators.rsi ? calcRSI(closes) : undefined;
   const emaData = indicators.ema ? calcEMA(closes) : undefined;
 
   // Đồng bộ theme cho <html>
@@ -90,7 +89,6 @@ function App() {
         {/* Biểu đồ */}
         <ChartContainer
           data={klines}
-          rsi={rsiData}
           ema={emaData}
           theme={theme}
         />

@@ -1,5 +1,4 @@
-import React from "react";
-import { cryptoCoins, getCryptoImage } from "../utils/api";
+import { cryptoCoins } from "../utils/api";
 
 export default function CoinSelector({
   current,

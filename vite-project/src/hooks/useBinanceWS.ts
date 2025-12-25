@@ -40,7 +40,7 @@ export function useBinanceWS(
       onNewData(candle);
     };
 
-    ws.onerror = (err) => {
+    ws.onerror = () => {
       ws.close();
     };
 
